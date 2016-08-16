@@ -92,3 +92,55 @@ type PetSetList struct {
 	unversioned.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 	Items                []PetSet `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
+
+// NEW
+// FoxSet represents a set of pods with
+type FoxSet struct {
+	unversioned.TypeMeta `json:",inline"`
+	v1.ObjectMeta        `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of pets in this set.
+	Spec FoxSetSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+
+	// Status is the current status of Pets in this PetSet. This data
+	// may be out of date by some window of time.
+	Status FoxSetStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// A FoxSetSpec is the specification of a FoxSet.
+type FoxSetSpec struct {
+	// Replicas is the desired number of replicas of the given Template.
+	// These are replicas in the sense that they are instantiations of the
+	// same Template, but individual replicas also have a consistent identity.
+	// If unspecified, defaults to 1.
+	// TODO: Consider a rename of this field.
+	Replicas *int32 `json:"replicas,omitempty" protobuf:"varint,1,opt,name=replicas"`
+
+	// Selector is a label query over pods that should match the replica count.
+	// If empty, defaulted to labels on the pod template.
+	// More info: http://releases.k8s.io/HEAD/docs/user-guide/labels.md#label-selectors
+	Selector *unversioned.LabelSelector `json:"selector,omitempty" protobuf:"bytes,2,opt,name=selector"`
+
+	// Template is the object that describes the pod that will be created if
+	// insufficient replicas are detected. Each pod stamped out by the PetSet
+	// will fulfill this Template, but have a unique identity from the rest
+	// of the PetSet.
+	Template v1.PodTemplateSpec `json:"template" protobuf:"bytes,3,opt,name=template"`
+}
+
+// FoxSetStatus represents the current state of a PetSet.
+type FoxSetStatus struct {
+	// most recent generation observed by this autoscaler.
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty" protobuf:"varint,1,opt,name=observedGeneration"`
+
+	// Replicas is the number of actual replicas.
+	Replicas int32 `json:"replicas" protobuf:"varint,2,opt,name=replicas"`
+}
+
+// FoxSetList is a collection of PetSets.
+type FoxSetList struct {
+	unversioned.TypeMeta `json:",inline"`
+	unversioned.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	Items                []FoxSet `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
