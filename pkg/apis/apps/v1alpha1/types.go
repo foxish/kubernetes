@@ -93,8 +93,8 @@ type PetSetList struct {
 	Items                []PetSet `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
-// NEW
-// FoxSet represents a set of pods with
+// FoxSet represents a set of pods with a healthcheck done by a daemon.
+// These are not health-checked separately.
 type FoxSet struct {
 	unversioned.TypeMeta `json:",inline"`
 	v1.ObjectMeta        `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
@@ -113,7 +113,6 @@ type FoxSetSpec struct {
 	// These are replicas in the sense that they are instantiations of the
 	// same Template, but individual replicas also have a consistent identity.
 	// If unspecified, defaults to 1.
-	// TODO: Consider a rename of this field.
 	Replicas *int32 `json:"replicas,omitempty" protobuf:"varint,1,opt,name=replicas"`
 
 	// Selector is a label query over pods that should match the replica count.
@@ -126,6 +125,11 @@ type FoxSetSpec struct {
 	// will fulfill this Template, but have a unique identity from the rest
 	// of the PetSet.
 	Template v1.PodTemplateSpec `json:"template" protobuf:"bytes,3,opt,name=template"`
+
+	// DaemonSetName is the name of the daemonset that governs this FoxSet.
+	// This daemonset must exist before the FoxSet, and is responsible for
+	// the health checking of each pet.
+	// DaemonSetName string `json:"serviceName" protobuf:"bytes,4,opt,name=daemonsetname"`
 }
 
 // FoxSetStatus represents the current state of a PetSet.

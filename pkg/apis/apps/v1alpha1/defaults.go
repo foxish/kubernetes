@@ -24,6 +24,7 @@ import (
 func addDefaultingFuncs(scheme *runtime.Scheme) error {
 	return scheme.AddDefaultingFuncs(
 		SetDefaults_PetSet,
+		SetDefaults_FoxSet,
 	)
 }
 
@@ -44,3 +45,22 @@ func SetDefaults_PetSet(obj *PetSet) {
 		*obj.Spec.Replicas = 1
 	}
 }
+
+func SetDefaults_FoxSet(obj *FoxSet) {
+	labels := obj.Spec.Template.Labels
+	if labels != nil {
+		if obj.Spec.Selector == nil {
+			obj.Spec.Selector = &unversioned.LabelSelector{
+				MatchLabels: labels,
+			}
+		}
+		if len(obj.Labels) == 0 {
+			obj.Labels = labels
+		}
+	}
+	if obj.Spec.Replicas == nil {
+		obj.Spec.Replicas = new(int32)
+		*obj.Spec.Replicas = 1
+	}
+}
+
