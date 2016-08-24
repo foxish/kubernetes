@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/juju/ratelimit"
+	"github.com/golang/glog"
 )
 
 type RateLimiter interface {
@@ -91,8 +92,10 @@ func (r *ItemExponentialFailureRateLimiter) When(item interface{}) time.Duration
 	defer r.failuresLock.Unlock()
 
 	r.failures[item] = r.failures[item] + 1
+	backOff := math.Min(math.Pow10(r.failures[item]-1), math.MaxInt8)
+	calculated := r.baseDelay * time.Duration(backOff)
 
-	calculated := r.baseDelay * time.Duration(math.Pow10(r.failures[item]-1))
+	glog.Infof("### delay-> %#v, %#v", backOff, calculated)
 	if calculated > r.maxDelay {
 		return r.maxDelay
 	}

@@ -116,6 +116,7 @@ func (p *petSyncer) Sync(pet *pcb) error {
 	glog.Infof("###Set blocking pet %#v", pet)
 	p.blockingPet = pet
 	if err := p.Create(pet); err != nil {
+		glog.Infof("###err creating pet %#v %#v", pet.pod.Name, err)
 		return err
 	}
 	return nil

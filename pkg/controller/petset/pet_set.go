@@ -253,7 +253,8 @@ func (psc *PetSetController) enqueuePetSet(obj interface{}) {
 		glog.Errorf("Cound't get key for object %+v: %v", obj, err)
 		return
 	}
-	psc.queue.AddRateLimited(key)
+	psc.queue.Add(key)
+	glog.Infof("###enqueue2: %#v, %#v", key, psc.queue.NumRequeues(key))
 }
 
 // worker runs a worker thread that just dequeues items, processes them, and marks them done.
@@ -269,7 +270,11 @@ func (psc *PetSetController) worker() {
 			if errs := psc.syncHandler(key.(string)); len(errs) != 0 {
 				glog.Errorf("Error syncing PetSet %v, requeuing: %v", key.(string), errs)
 				psc.queue.AddRateLimited(key)
+			} else {
+				psc.queue.Forget(key)
+				glog.Infof("###NO ERRORS SYNCING PETSET")
 			}
+			glog.Infof("###requeues: %#v, %#v", key, psc.queue.NumRequeues(key))
 		}()
 	}
 }
@@ -311,7 +316,7 @@ func (psc *PetSetController) Sync(key string) []error {
 		glog.Infof("Failed to update replica count for petset %v/%v; requeuing; error: %v", ps.Namespace, ps.Name, err)
 		errs = append(errs, err)
 	}
-
+	glog.Infof("###errgoingup? -> %#v", errs)
 	return errs
 }
 
@@ -357,14 +362,10 @@ func (psc *PetSetController) syncPetSet(ps *apps.PetSet, pets []*api.Pod) (int, 
 		}
 	}
 
+	glog.Infof("###peterracc -> %#v", it.errs)
 	if err := psc.blockingPetStore.Add(petManager.blockingPet); err != nil {
 		it.errs = append(it.errs, err)
 	}
-
-	//// Return error if there is still a blocking pet.
-	//if petManager.blockingPet != nil {
-	//	it.errs = append(it.errs, fmt.Errorf("PetSet %v blocked from scaling on pet %v", ps.Name, blockingPet.pod.Name))
-	//}
 
 	// TODO: GC pvcs. We can't delete them per pet because of grace period, and
 	// in fact we *don't want to* till petset is stable to guarantee that bugs

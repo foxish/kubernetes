@@ -16,6 +16,11 @@ limitations under the License.
 
 package workqueue
 
+import (
+	"github.com/golang/glog"
+
+)
+
 // RateLimitingInterface is an Interface that can Add an item at a later time.  This makes it easier to
 // requeue items after failures without ending up in a hot-loop.
 type RateLimitingInterface interface {
@@ -56,6 +61,8 @@ type rateLimitingType struct {
 
 // AddRateLimited AddAfter's the item based on the time when the rate limiter says its ok
 func (q *rateLimitingType) AddRateLimited(item interface{}) {
+	glog.Infof("###rateLimiterInterval2: %#v", q.rateLimiter.When(item))
+
 	q.DelayingInterface.AddAfter(item, q.rateLimiter.When(item))
 }
 
