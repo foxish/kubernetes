@@ -112,6 +112,8 @@ func (p *petSyncer) Sync(pet *pcb) error {
 	// TODO: What's the desired behavior if pet-0 is deleted while pet-1 is
 	// not yet healthy? currently pet-0 will wait till pet-1 is healthy,
 	// this feels safer, but might lead to deadlock.
+
+	glog.Infof("###Set blocking pet %#v", pet)
 	p.blockingPet = pet
 	if err := p.Create(pet); err != nil {
 		return err

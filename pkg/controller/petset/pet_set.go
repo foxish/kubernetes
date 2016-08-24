@@ -327,6 +327,8 @@ func (psc *PetSetController) syncPetSet(ps *apps.PetSet, pets []*api.Pod) (int, 
 	if blockingPet != nil {
 		glog.Infof("PetSet %v blocked from scaling on pet %v", ps.Name, blockingPet.pod.Name)
 	}
+
+	glog.Infof("###petblocking? -> %#v", blockingPet)
 	petManager := psc.newSyncer(blockingPet)
 	numPets := 0
 
@@ -335,13 +337,19 @@ func (psc *PetSetController) syncPetSet(ps *apps.PetSet, pets []*api.Pod) (int, 
 		if pet == nil {
 			continue
 		}
+		glog.Infof("###peto -> %#v", pet.pod.Name)
+
 		switch pet.event {
 		case syncPet:
+			glog.Infof("###petsync -> %#v", pet.pod.Name)
+
 			err = petManager.Sync(pet)
 			if err == nil {
 				numPets++
 			}
 		case deletePet:
+			glog.Infof("###petdel -> %#v", pet.pod.Name)
+
 			err = petManager.Delete(pet)
 		}
 		if err != nil {
@@ -352,6 +360,12 @@ func (psc *PetSetController) syncPetSet(ps *apps.PetSet, pets []*api.Pod) (int, 
 	if err := psc.blockingPetStore.Add(petManager.blockingPet); err != nil {
 		it.errs = append(it.errs, err)
 	}
+
+	//// Return error if there is still a blocking pet.
+	//if petManager.blockingPet != nil {
+	//	it.errs = append(it.errs, fmt.Errorf("PetSet %v blocked from scaling on pet %v", ps.Name, blockingPet.pod.Name))
+	//}
+
 	// TODO: GC pvcs. We can't delete them per pet because of grace period, and
 	// in fact we *don't want to* till petset is stable to guarantee that bugs
 	// in the controller don't corrupt user data.
