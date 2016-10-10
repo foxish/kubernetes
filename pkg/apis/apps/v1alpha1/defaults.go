@@ -43,4 +43,8 @@ func SetDefaults_PetSet(obj *PetSet) {
 		obj.Spec.Replicas = new(int32)
 		*obj.Spec.Replicas = 1
 	}
+
+	finalizers := obj.Spec.Template.Finalizers
+	append(finalizers, "k8s.io/safe-delete")
+	obj.Spec.Template.SetFinalizers(finalizers)
 }
