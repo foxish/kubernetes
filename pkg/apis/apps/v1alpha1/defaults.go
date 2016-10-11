@@ -45,6 +45,6 @@ func SetDefaults_PetSet(obj *PetSet) {
 	}
 
 	finalizers := obj.Spec.Template.Finalizers
-	append(finalizers, "k8s.io/safe-delete")
+	finalizers = append(finalizers, "k8s.io/safe-delete")
 	obj.Spec.Template.SetFinalizers(finalizers)
 }

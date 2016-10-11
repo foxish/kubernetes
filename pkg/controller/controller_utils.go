@@ -440,6 +440,8 @@ func (r RealPodControl) PatchPod(namespace, name string, data []byte) error {
 func GetPodFromTemplate(template *api.PodTemplateSpec, parentObject runtime.Object, controllerRef *api.OwnerReference) (*api.Pod, error) {
 	desiredLabels := getPodsLabelSet(template)
 	desiredAnnotations, err := getPodsAnnotationSet(template, parentObject)
+	
+
 	if err != nil {
 		return nil, err
 	}
@@ -454,6 +456,7 @@ func GetPodFromTemplate(template *api.PodTemplateSpec, parentObject runtime.Obje
 			Labels:       desiredLabels,
 			Annotations:  desiredAnnotations,
 			GenerateName: prefix,
+			Finalizers:   template.Finalizers,
 		},
 	}
 	if controllerRef != nil {
