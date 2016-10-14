@@ -43,6 +43,7 @@ import (
 	utilyaml "k8s.io/kubernetes/pkg/util/yaml"
 	"k8s.io/kubernetes/pkg/watch"
 	"k8s.io/kubernetes/test/e2e/framework"
+	"k8s.io/kubernetes/pkg/controller/node"
 )
 
 const (
@@ -294,6 +295,24 @@ var _ = framework.KubeDescribe("PetSet keeps working even after a node gets rest
 		nodeNames, err := framework.CheckNodesReady(f.Client, framework.NodeReadyInitialTimeout, nn)
 		framework.ExpectNoError(err)
 		restartNodes(f, nodeNames)
+
+		By("waiting for pods to be running again")
+		pst.waitForRunning(ps.Spec.Replicas, ps)
+	})
+
+	It("should not have split brain if node controller goes down [Feature:PetSet]", func() {
+		petMounts := []api.VolumeMount{{Name: "datadir", MountPath: "/data/"}}
+		podMounts := []api.VolumeMount{{Name: "home", MountPath: "/home"}}
+		ps := newPetSet(psName, ns, headlessSvcName, 3, petMounts, podMounts, labels)
+		_, err := c.Apps().PetSets(ns).Create(ps)
+		Expect(err).NotTo(HaveOccurred())
+
+		pst := petSetTester{c: c}
+		pst.saturate(ps)
+
+		nn := framework.TestContext.CloudConfig.NumNodes
+		nodeNames, err := framework.CheckNodesReady(f.Client, framework.NodeReadyInitialTimeout, nn)
+		framework.ExpectNoError(err)
 
 		By("waiting for pods to be running again")
 		pst.waitForRunning(ps.Spec.Replicas, ps)
@@ -942,4 +961,45 @@ func newPetSet(name, ns, governingSvcName string, replicas int32, petMounts []ap
 			ServiceName:          governingSvcName,
 		},
 	}
+}
+
+// Blocks outgoing network traffic on 'node'. Then verifies that 'podNameToDisappear',
+// that belongs to petset 'petSetName', _does not_ disappear due to forced deletion from the apiserver.
+// At the end (even in case of errors), the network traffic is brought back to normal.
+// This function executes commands on a node so it will work only for some
+// environments.
+func simulatePetSetNodeFailure(c *client.Client, ns, podName string, node *api.Node) {
+	host := getNodeExternalIP(node)
+	master := getMaster(c)
+	By(fmt.Sprintf("block network traffic from node %s to the master", node.Name))
+	defer func() {
+		// This code will execute even if setting the iptables rule failed.
+		// It is on purpose because we may have an error even if the new rule
+		// had been inserted. (yes, we could look at the error code and ssh error
+		// separately, but I prefer to stay on the safe side).
+		By(fmt.Sprintf("Unblock network traffic from node %s to the master", node.Name))
+		framework.UnblockNetwork(host, master)
+	}()
+
+	framework.Logf("Waiting %v to ensure node %s is ready before beginning test...", resizeNodeReadyTimeout, node.Name)
+	if !framework.WaitForNodeToBe(c, node.Name, api.NodeReady, true, resizeNodeReadyTimeout) {
+		framework.Failf("Node %s did not become ready within %v", node.Name, resizeNodeReadyTimeout)
+	}
+	framework.BlockNetwork(host, master)
+
+	framework.Logf("Waiting %v for node %s to be not ready after simulated network failure", resizeNodeNotReadyTimeout, node.Name)
+	if !framework.WaitForNodeToBe(c, node.Name, api.NodeReady, false, resizeNodeNotReadyTimeout) {
+		framework.Failf("Node %s did not become not-ready within %v", node.Name, resizeNodeNotReadyTimeout)
+	}
+
+	framework.Logf("Waiting for node controller timeout", podName)
+	//err := framework.
+	//err := framework.WaitForRCPodToDisappear(c, ns, rcName, podNameToDisappear)
+	Expect(err).NotTo(HaveOccurred())
+	//
+	//By("verifying whether the pod from the unreachable node is not recreated")
+	//err = framework.VerifyPods(c, ns, rcName, true, replicas)
+	//Expect(err).NotTo(HaveOccurred())
+
+	// network traffic is unblocked in a deferred function
 }
