@@ -43,7 +43,6 @@ import (
 	utilyaml "k8s.io/kubernetes/pkg/util/yaml"
 	"k8s.io/kubernetes/pkg/watch"
 	"k8s.io/kubernetes/test/e2e/framework"
-	"golang.org/x/tools/go/gcimporter15/testdata"
 )
 
 const (
@@ -309,10 +308,6 @@ var _ = framework.KubeDescribe("PetSet keeps working even after a node gets rest
 
 		pst := petSetTester{c: c}
 		pst.saturate(ps)
-
-		nn := framework.TestContext.CloudConfig.NumNodes
-		nodeNames, err := framework.CheckNodesReady(f.Client, framework.NodeReadyInitialTimeout, nn)
-		framework.ExpectNoError(err)
 
 		pod := pst.getPodList(ps).Items[0]
 		node, err := c.Nodes().Get(pod.Spec.NodeName)
