@@ -1415,6 +1415,14 @@ func WaitForPodToDisappear(c *client.Client, ns, podName string, label labels.Se
 	})
 }
 
+// WaitForRCPodToDisappear returns nil if the pod continues to exist at timeout.
+// In case of failure or too long waiting time, an error is returned.
+func WaitForPetSetPodToDisappear(c *client.Client, ns, rcName, podName string) error {
+	label := labels.SelectorFromSet(labels.Set(map[string]string{"name": rcName}))
+	// NodeController should *not* evict pod after 5 minutes.
+	return WaitForPodToDisappear(c, ns, podName, label, 20*time.Second, 10*time.Minute)
+}
+
 // WaitForRCPodToDisappear returns nil if the pod from the given replication controller (described by rcName) no longer exists.
 // In case of failure or too long waiting time, an error is returned.
 func WaitForRCPodToDisappear(c *client.Client, ns, rcName, podName string) error {
@@ -1424,6 +1432,16 @@ func WaitForRCPodToDisappear(c *client.Client, ns, rcName, podName string) error
 	// to be on the safe size.
 	return WaitForPodToDisappear(c, ns, podName, label, 20*time.Second, 10*time.Minute)
 }
+
+//// WaitForPetSetPodToDisappear returns an error if the pod from the given PetSet (described by petsetName) no longer exists.
+//// In case of timeout, nil is returned.
+//func WaitForPetSetPodToDisappear(c *client.Client, ns, rcName, podName string) error {
+//	label := labels.SelectorFromSet(labels.Set(map[string]string{"name": rcName}))
+//	// NodeController evicts pod after 5 minutes, so we need timeout greater than that.
+//	// Additionally, there can be non-zero grace period, so we are setting 10 minutes
+//	// to be on the safe size.
+//	return WaitForPodToDisappear(c, ns, podName, label, 20*time.Second, 10*time.Minute)
+//}
 
 // WaitForService waits until the service appears (exist == true), or disappears (exist == false)
 func WaitForService(c *client.Client, namespace, name string, exist bool, interval, timeout time.Duration) error {
