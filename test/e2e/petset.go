@@ -43,6 +43,7 @@ import (
 	utilyaml "k8s.io/kubernetes/pkg/util/yaml"
 	"k8s.io/kubernetes/pkg/watch"
 	"k8s.io/kubernetes/test/e2e/framework"
+	"golang.org/x/tools/go/gcimporter15/testdata"
 )
 
 const (
@@ -313,7 +314,11 @@ var _ = framework.KubeDescribe("PetSet keeps working even after a node gets rest
 		nodeNames, err := framework.CheckNodesReady(f.Client, framework.NodeReadyInitialTimeout, nn)
 		framework.ExpectNoError(err)
 
-		//simulatePetSetNodeFailure
+		pod := pst.getPodList(ps).Items[0]
+		node, err := c.Nodes().Get(pod.Spec.NodeName)
+		framework.ExpectNoError(err)
+
+		simulatePetSetNodeFailure(c, ns, pod.Name, pod.ResourceVersion, node)
 
 		By("waiting for pods to be running again")
 		pst.waitForRunning(ps.Spec.Replicas, ps)
