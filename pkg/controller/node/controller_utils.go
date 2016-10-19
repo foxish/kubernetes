@@ -73,7 +73,7 @@ func deletePods(kubeClient clientset.Interface, recorder record.EventRecorder, n
 
 		glog.V(2).Infof("Starting deletion of pod %v", pod.Name)
 		recorder.Eventf(&pod, api.EventTypeNormal, "NodeControllerEviction", "Marking for deletion Pod %s from Node %s", pod.Name, nodeName)
-		if err := kubeClient.Core().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
+		if err := kubeClient.Core().Pods(pod.Namespace).Delete(pod.Name, api.NewDeleteOptions(10)); err != nil {
 			return false, err
 		}
 		remaining = true
@@ -82,7 +82,7 @@ func deletePods(kubeClient clientset.Interface, recorder record.EventRecorder, n
 }
 
 func forcefullyDeletePod(c clientset.Interface, pod *api.Pod) error {
-	err := c.Core().Pods(pod.Namespace).Delete(pod.Name, &api.DeleteOptions{})
+	err := c.Core().Pods(pod.Namespace).Delete(pod.Name, &api.DeleteOptions{GracePeriodSeconds: nil})
 	if err == nil {
 		glog.V(4).Infof("Deletion of %s succeeded", pod.Name)
 	}
