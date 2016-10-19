@@ -300,9 +300,7 @@ var _ = framework.KubeDescribe("PetSet keeps working even after a node gets rest
 	//})
 
 	It("should not have reschedule pets if there is a network partition [Slow] [Disruptive] [Feature:PetSet]", func() {
-		petMounts := []api.VolumeMount{{Name: "datadir", MountPath: "/data/"}}
-		podMounts := []api.VolumeMount{{Name: "home", MountPath: "/home"}}
-		ps := newPetSet(psName, ns, headlessSvcName, 3, petMounts, podMounts, labels)
+		ps := newPetSet(psName, ns, headlessSvcName, 3, []api.VolumeMount{}, []api.VolumeMount{}, labels)
 		_, err := c.Apps().PetSets(ns).Create(ps)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -349,8 +347,8 @@ func simulatePetSetNodeFailure(c *client.Client, ns, podName, resourceVersion st
 		framework.Failf("Node %s did not become not-ready within %v", node.Name, resizeNodeNotReadyTimeout)
 	}
 
-	framework.Logf("Waiting for node controller to remove petset pod", podName)
-	evicted, err := framework.WaitTimeoutForPodEviction(c, podName, ns, "", 10*time.Minute)
+	framework.Logf("Checking that the NodeController does not force delete pet %v", podName)
+	err := framework.WaitTimeoutForPodNoLongerRunningInNamespace(c, podName, ns, resourceVersion, 10*time.Minute)
 	Expect(err).NotTo(HaveOccurred())
 	// network traffic is unblocked in a deferred function
 }
