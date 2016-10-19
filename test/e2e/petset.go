@@ -280,24 +280,24 @@ var _ = framework.KubeDescribe("PetSet keeps working even after a node gets rest
 		deleteAllPetSets(c, ns)
 	})
 
-	//It("should come back up if node goes down [Feature:PetSet]", func() {
-	//	petMounts := []api.VolumeMount{{Name: "datadir", MountPath: "/data/"}}
-	//	podMounts := []api.VolumeMount{{Name: "home", MountPath: "/home"}}
-	//	ps := newPetSet(psName, ns, headlessSvcName, 3, petMounts, podMounts, labels)
-	//	_, err := c.Apps().PetSets(ns).Create(ps)
-	//	Expect(err).NotTo(HaveOccurred())
-	//
-	//	pst := petSetTester{c: c}
-	//	pst.saturate(ps)
-	//
-	//	nn := framework.TestContext.CloudConfig.NumNodes
-	//	nodeNames, err := framework.CheckNodesReady(f.Client, framework.NodeReadyInitialTimeout, nn)
-	//	framework.ExpectNoError(err)
-	//	restartNodes(f, nodeNames)
-	//
-	//	By("waiting for pods to be running again")
-	//	pst.waitForRunning(ps.Spec.Replicas, ps)
-	//})
+	It("should come back up if node goes down [Slow] [Disruptive] [Feature:PetSet]", func() {
+		petMounts := []api.VolumeMount{{Name: "datadir", MountPath: "/data/"}}
+		podMounts := []api.VolumeMount{{Name: "home", MountPath: "/home"}}
+		ps := newPetSet(psName, ns, headlessSvcName, 3, petMounts, podMounts, labels)
+		_, err := c.Apps().PetSets(ns).Create(ps)
+		Expect(err).NotTo(HaveOccurred())
+
+		pst := petSetTester{c: c}
+		pst.saturate(ps)
+
+		nn := framework.TestContext.CloudConfig.NumNodes
+		nodeNames, err := framework.CheckNodesReady(f.Client, framework.NodeReadyInitialTimeout, nn)
+		framework.ExpectNoError(err)
+		restartNodes(f, nodeNames)
+
+		By("waiting for pods to be running again")
+		pst.waitForRunning(ps.Spec.Replicas, ps)
+	})
 
 	It("should not have reschedule pets if there is a network partition [Slow] [Disruptive] [Feature:PetSet]", func() {
 		ps := newPetSet(psName, ns, headlessSvcName, 3, []api.VolumeMount{}, []api.VolumeMount{}, labels)
@@ -349,7 +349,7 @@ func simulatePetSetNodeFailure(c *client.Client, ns, podName, resourceVersion st
 
 	framework.Logf("Checking that the NodeController does not force delete pet %v", podName)
 	err := framework.WaitTimeoutForPodNoLongerRunningInNamespace(c, podName, ns, resourceVersion, 10*time.Minute)
-	Expect(err).NotTo(HaveOccurred())
+	Expect(err).To(Equal(wait.ErrWaitTimeout), "Pet was not force deleted.")
 	// network traffic is unblocked in a deferred function
 }
 
