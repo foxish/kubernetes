@@ -82,10 +82,9 @@ func deletePods(kubeClient clientset.Interface, recorder record.EventRecorder, n
 }
 
 func forcefullyDeletePod(c clientset.Interface, pod *api.Pod) error {
-	var zero int64
-	err := c.Core().Pods(pod.Namespace).Delete(pod.Name, &api.DeleteOptions{GracePeriodSeconds: &zero})
+	err := c.Core().Pods(pod.Namespace).Delete(pod.Name, &api.DeleteOptions{})
 	if err == nil {
-		glog.V(4).Infof("forceful deletion of %s succeeded", pod.Name)
+		glog.V(4).Infof("Deletion of %s succeeded", pod.Name)
 	}
 	return err
 }
