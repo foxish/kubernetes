@@ -1700,27 +1700,6 @@ func TestCheckPod(t *testing.T) {
 		{
 			pod: api.Pod{
 				ObjectMeta: api.ObjectMeta{DeletionTimestamp: &unversioned.Time{}},
-				Spec:       api.PodSpec{NodeName: "old"},
-			},
-			prune: true,
-		},
-		{
-			pod: api.Pod{
-				ObjectMeta: api.ObjectMeta{DeletionTimestamp: &unversioned.Time{}},
-				Spec:       api.PodSpec{NodeName: "older"},
-			},
-			prune: true,
-		},
-		{
-			pod: api.Pod{
-				ObjectMeta: api.ObjectMeta{DeletionTimestamp: &unversioned.Time{}},
-				Spec:       api.PodSpec{NodeName: "oldest"},
-			},
-			prune: true,
-		},
-		{
-			pod: api.Pod{
-				ObjectMeta: api.ObjectMeta{DeletionTimestamp: &unversioned.Time{}},
 				Spec:       api.PodSpec{NodeName: ""},
 			},
 			prune: true,
@@ -1731,6 +1710,27 @@ func TestCheckPod(t *testing.T) {
 				Spec:       api.PodSpec{NodeName: "nonexistant"},
 			},
 			prune: true,
+		},
+		{
+			pod: api.Pod{
+				ObjectMeta: api.ObjectMeta{DeletionTimestamp: &unversioned.Time{}},
+				Spec:       api.PodSpec{NodeName: "old"},
+			},
+			prune: false,
+		},
+		{
+			pod: api.Pod{
+				ObjectMeta: api.ObjectMeta{DeletionTimestamp: &unversioned.Time{}},
+				Spec:       api.PodSpec{NodeName: "older"},
+			},
+			prune: false,
+		},
+		{
+			pod: api.Pod{
+				ObjectMeta: api.ObjectMeta{DeletionTimestamp: &unversioned.Time{}},
+				Spec:       api.PodSpec{NodeName: "oldest"},
+			},
+			prune: false,
 		},
 	}
 
