@@ -559,7 +559,7 @@ func (nc *NodeController) monitorNodeStatus() error {
 						// Kubelet is not reporting and Cloud Provider says node
 						// is gone. Delete it without worrying about grace
 						// periods.
-						if err := forcefullyDeleteNode(nc.kubeClient, nodeName, nc.forcefullyDeletePod); err != nil {
+						if err := deleteNode(nc.kubeClient, nodeName); err != nil {
 							glog.Errorf("Unable to forcefully delete node %q: %v", nodeName, err)
 						}
 					}(node.Name)

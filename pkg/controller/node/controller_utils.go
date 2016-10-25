@@ -90,23 +90,8 @@ func forcefullyDeletePod(c clientset.Interface, pod *api.Pod) error {
 	return err
 }
 
-// forcefullyDeleteNode immediately deletes all pods on the node, and then
-// deletes the node itself.
-func forcefullyDeleteNode(kubeClient clientset.Interface, nodeName string, forcefulDeletePodFunc func(*api.Pod) error) error {
-	selector := fields.OneTermEqualSelector(api.PodHostField, nodeName)
-	options := api.ListOptions{FieldSelector: selector}
-	pods, err := kubeClient.Core().Pods(api.NamespaceAll).List(options)
-	if err != nil {
-		return fmt.Errorf("unable to list pods on node %q: %v", nodeName, err)
-	}
-	for _, pod := range pods.Items {
-		if pod.Spec.NodeName != nodeName {
-			continue
-		}
-		if err := forcefulDeletePodFunc(&pod); err != nil {
-			return fmt.Errorf("unable to delete pod %q on node %q: %v", pod.Name, nodeName, err)
-		}
-	}
+// deleteNode immediately deletes the node.
+func deleteNode(kubeClient clientset.Interface, nodeName string) error {
 	if err := kubeClient.Core().Nodes().Delete(nodeName, nil); err != nil {
 		return fmt.Errorf("unable to delete node %q: %v", nodeName, err)
 	}
@@ -135,26 +120,12 @@ func (nc *NodeController) maybeDeleteTerminatingPod(obj interface{}) {
 		return
 	}
 
-	// delete terminating pods that have not yet been scheduled
-	if len(pod.Spec.NodeName) == 0 {
-		utilruntime.HandleError(nc.forcefullyDeletePod(pod))
-		return
-	}
-
-	nodeObj, found, err := nc.nodeStore.Store.GetByKey(pod.Spec.NodeName)
+	nodeObj, _, err := nc.nodeStore.Store.GetByKey(pod.Spec.NodeName)
 	if err != nil {
 		// this can only happen if the Store.KeyFunc has a problem creating
 		// a key for the pod. If it happens once, it will happen again so
 		// don't bother requeuing the pod.
 		utilruntime.HandleError(err)
-		return
-	}
-
-	// delete terminating pods that have been scheduled on
-	// nonexistent nodes
-	if !found {
-		glog.Warningf("Unable to find Node: %v, deleting all assigned Pods.", pod.Spec.NodeName)
-		utilruntime.HandleError(nc.forcefullyDeletePod(pod))
 		return
 	}
 
