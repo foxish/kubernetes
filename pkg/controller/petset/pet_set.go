@@ -39,6 +39,7 @@ import (
 	"k8s.io/kubernetes/pkg/watch"
 
 	"github.com/golang/glog"
+	"strconv"
 )
 
 const (
@@ -48,6 +49,9 @@ const (
 	statusUpdateRetries = 2
 	// period to relist petsets and verify pets
 	petSetResyncPeriod = 30 * time.Second
+	// This annotation is set to true in order to pause the petset controller.
+	// It exists mostly as a debug hook.
+	PetSetPauseAnnotation = "petset.beta.kubernetes.io/pause"
 )
 
 // PetSetController controls petsets.
@@ -322,6 +326,12 @@ func (psc *PetSetController) Sync(key string) error {
 // syncPetSet syncs a tuple of (petset, pets).
 func (psc *PetSetController) syncPetSet(ps *apps.PetSet, pets []*api.Pod) (int, error) {
 	glog.Infof("Syncing PetSet %v/%v with %d pets", ps.Namespace, ps.Name, len(pets))
+
+	b, err := strconv.ParseBool(ps.Annotations[PetSetPauseAnnotation])
+	if err == nil && b {
+		glog.Infof("PetSet %v controller blocked by annotation %v", ps.Name, PetSetPauseAnnotation)
+		return 0, nil
+	}
 
 	it := NewPetSetIterator(ps, pets)
 	blockingPet, err := psc.blockingPetStore.Get(ps, pets)

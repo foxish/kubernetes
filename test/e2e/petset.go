@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -34,7 +33,6 @@ import (
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/apis/apps"
 	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
-	"k8s.io/kubernetes/pkg/controller/petset"
 	"k8s.io/kubernetes/pkg/labels"
 	"k8s.io/kubernetes/pkg/runtime"
 	"k8s.io/kubernetes/pkg/types"
@@ -705,11 +703,6 @@ func (p *petSetTester) setHealthy(ps *apps.PetSet) {
 		if markedHealthyPod != "" {
 			framework.Failf("Found multiple non-healthy pets: %v and %v", pod.Name, markedHealthyPod)
 		}
-		p, err := framework.UpdatePodWithRetries(p.c, pod.Namespace, pod.Name, func(up *api.Pod) {
-			up.Annotations[petset.PetSetInitAnnotation] = "true"
-		})
-		ExpectNoError(err)
-		framework.Logf("Set annotation %v to %v on pod %v", petset.PetSetInitAnnotation, p.Annotations[petset.PetSetInitAnnotation], pod.Name)
 		markedHealthyPod = pod.Name
 	}
 }
@@ -826,15 +819,7 @@ func pollReadWithTimeout(pet petTester, petNumber int, key, expectedVal string) 
 }
 
 func isInitialized(pod api.Pod) bool {
-	initialized, ok := pod.Annotations[petset.PetSetInitAnnotation]
-	if !ok {
-		return false
-	}
-	inited, err := strconv.ParseBool(initialized)
-	if err != nil {
-		framework.Failf("Couldn't parse petset init annotations %v", initialized)
-	}
-	return inited
+	return api.IsPodReady(&pod)
 }
 
 func dec(i int64, exponent int) *inf.Dec {

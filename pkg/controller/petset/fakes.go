@@ -252,7 +252,6 @@ func (f *fakePetClient) setHealthy(index int) error {
 		return fmt.Errorf("Index out of range, len %v index %v", len(f.pets), index)
 	}
 	f.pets[index].pod.Status.Phase = api.PodRunning
-	f.pets[index].pod.Annotations[PetSetInitAnnotation] = "true"
 	f.pets[index].pod.Status.Conditions = []api.PodCondition{
 		{Type: api.PodReady, Status: api.ConditionTrue},
 	}

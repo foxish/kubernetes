@@ -18,7 +18,6 @@ package petset
 
 import (
 	"fmt"
-	"strconv"
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/errors"
@@ -41,10 +40,6 @@ const (
 	// updateRetries is the number of Get/Update cycles we perform when an
 	// update fails.
 	updateRetries = 3
-	// PetSetInitAnnotation is an annotation which when set, indicates that the
-	// pet has finished initializing itself.
-	// TODO: Replace this with init container status.
-	PetSetInitAnnotation = "pod.alpha.kubernetes.io/initialized"
 )
 
 // pcb is the control block used to transmit all updates about a single pet.
@@ -297,22 +292,12 @@ type petHealthChecker interface {
 // It doesn't update, probe or get the pod.
 type defaultPetHealthChecker struct{}
 
-// isHealthy returns true if the pod is running and has the
-// "pod.alpha.kubernetes.io/initialized" set to "true".
+// isHealthy returns true if the pod is running.
 func (d *defaultPetHealthChecker) isHealthy(pod *api.Pod) bool {
 	if pod == nil || pod.Status.Phase != api.PodRunning {
 		return false
 	}
-	initialized, ok := pod.Annotations[PetSetInitAnnotation]
-	if !ok {
-		glog.Infof("PetSet pod %v in %v, waiting on annotation %v", api.PodRunning, pod.Name, PetSetInitAnnotation)
-		return false
-	}
-	b, err := strconv.ParseBool(initialized)
-	if err != nil {
-		return false
-	}
-	return b && api.IsPodReady(pod)
+	return api.IsPodReady(pod)
 }
 
 // isDying returns true if the pod has a non-nil deletion timestamp. Since the
