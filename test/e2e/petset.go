@@ -161,6 +161,7 @@ var _ = framework.KubeDescribe("PetSet [Slow] [Feature:PetSet]", func() {
 			// Now we have 1 healthy and 1 unhealthy pet. Deleting the healthy pet should *not*
 			// create a new pet till the remaining pet becomes healthy, which won't happen till
 			// we set the healthy bit.
+			// TODO(ramanathana): Fix the above expectation and stop the controller, or make it not-ready.
 
 			By("Deleting healthy pet at index 0.")
 			pst.deletePetAtIndex(0, ps)
@@ -678,11 +679,11 @@ func (p *petSetTester) waitForRunning(numPets int32, ps *apps.PetSet) {
 	p.waitForStatus(ps, numPets)
 }
 
-func (p *petSetTester) setReplicas(replicas int, ps *apps.PetSet) {
+func (p *petSetTester) setReplicas(replicas int32, ps *apps.PetSet) {
 	ps.Spec.Replicas = replicas
 	_, err := p.c.Apps().PetSets(ps.Namespace).Update(ps)
 	if err != nil {
-		framework.Failf("Failed to update scale of PetSet to %d: %v", n, err)
+		framework.Failf("Failed to update scale of PetSet to %d: %v", replicas, err)
 	}
 }
 
