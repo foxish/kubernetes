@@ -729,7 +729,10 @@ func printPodBase(pod *api.Pod, w io.Writer, options PrintOptions) error {
 			}
 		}
 	}
-	if pod.DeletionTimestamp != nil {
+
+	if pod.DeletionTimestamp != nil && pod.Status.Reason == "NodeLost" {
+		reason = "Unknown"
+	} else if pod.DeletionTimestamp != nil {
 		reason = "Terminating"
 	}
 

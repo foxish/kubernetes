@@ -72,12 +72,22 @@ func deletePods(kubeClient clientset.Interface, recorder record.EventRecorder, n
 
 		glog.V(2).Infof("Starting deletion of pod %v", pod.Name)
 		recorder.Eventf(&pod, api.EventTypeNormal, "NodeControllerEviction", "Marking for deletion Pod %s from Node %s", pod.Name, nodeName)
+
+		if _, err := kubeClient.Core().Pods(pod.Namespace).Update(setPodTerminationReason(&pod)); err != nil {
+			return false, err
+		}
 		if err := kubeClient.Core().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
 			return false, err
 		}
 		remaining = true
 	}
 	return remaining, nil
+}
+
+func setPodTerminationReason(pod *api.Pod) *api.Pod {
+	pod.Status.Reason = "NodeLost"
+	pod.Status.Message = "Node has not responded in a while"
+	return pod
 }
 
 func forcefullyDeletePod(c clientset.Interface, pod *api.Pod) error {
