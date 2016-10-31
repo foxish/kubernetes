@@ -416,6 +416,9 @@ func (nc *NodeController) Run() {
 			}
 		}, nodeEvictionPeriod, wait.NeverStop)
 	}()
+
+
+	nc.statusManager = status.NewManager(nc.kubeClient, nil)
 	nc.statusManager.Start()
 }
 
