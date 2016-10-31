@@ -41,7 +41,7 @@ const (
 
 // deletePods will delete all pods from master running on given node, and return true
 // if any pods were deleted, or were found pending deletion.
-func deletePods(kubeClient clientset.Interface, recorder record.EventRecorder, nodeName, nodeUID string, daemonStore cache.StoreToDaemonSetLister) (bool, error) {
+func deletePods(kubeClient clientset.Interface, recorder record.EventRecorder, nodeName, nodeUID string, daemonStore cache.StoreToDaemonSetLister, nc *NodeController) (bool, error) {
 	remaining := false
 	selector := fields.OneTermEqualSelector(api.PodHostField, nodeName)
 	options := api.ListOptions{FieldSelector: selector}
@@ -73,9 +73,11 @@ func deletePods(kubeClient clientset.Interface, recorder record.EventRecorder, n
 		glog.V(2).Infof("Starting deletion of pod %v", pod.Name)
 		recorder.Eventf(&pod, api.EventTypeNormal, "NodeControllerEviction", "Marking for deletion Pod %s from Node %s", pod.Name, nodeName)
 
-		if _, err := kubeClient.Core().Pods(pod.Namespace).Update(setPodTerminationReason(&pod)); err != nil {
-			return false, err
-		}
+		podStatus, _ := nc.statusManager.GetPodStatus(pod.UID)
+		podStatus.Reason = "NodeLost"
+		podStatus.Message = "Node has not responded in a while"
+		nc.statusManager.SetPodStatus(&pod, podStatus)
+
 		if err := kubeClient.Core().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
 			return false, err
 		}

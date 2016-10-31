@@ -42,6 +42,7 @@ import (
 	"k8s.io/kubernetes/pkg/util/system"
 	"k8s.io/kubernetes/pkg/util/wait"
 	"k8s.io/kubernetes/pkg/version"
+	"k8s.io/kubernetes/pkg/kubelet/status"
 )
 
 func init() {
@@ -159,6 +160,9 @@ type NodeController struct {
 	// the controller using NewDaemonSetsController(passing SharedInformer), this
 	// will be null
 	internalPodInformer cache.SharedIndexInformer
+
+	// Syncs pods statuses with apiserver; also used as a cache of statuses.
+	statusManager status.Manager
 }
 
 // NewNodeController returns a new node controller to sync instances from cloudprovider.
@@ -398,7 +402,7 @@ func (nc *NodeController) Run() {
 					}
 
 					nodeUid, _ := value.UID.(string)
-					remaining, err := deletePods(nc.kubeClient, nc.recorder, value.Value, nodeUid, nc.daemonSetStore)
+					remaining, err := deletePods(nc.kubeClient, nc.recorder, value.Value, nodeUid, nc.daemonSetStore, nc)
 					if err != nil {
 						utilruntime.HandleError(fmt.Errorf("unable to evict node %q: %v", value.Value, err))
 						return false, 0
@@ -412,6 +416,7 @@ func (nc *NodeController) Run() {
 			}
 		}, nodeEvictionPeriod, wait.NeverStop)
 	}()
+	nc.statusManager.Start()
 }
 
 // monitorNodeStatus verifies node status are constantly updated by kubelet, and if not,
