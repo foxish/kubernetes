@@ -123,13 +123,13 @@ func (p *plugin) CreateTPR() {
 	schemeBuilder.AddToScheme(api.Scheme)
 }
 
-func (p *plugin) CreateTPRInstance() {
+func (p *plugin) CreateTPRInstance(podName string) {
 	// Create an instance of our TPR
 	glog.Infof("CREATE TPR INSTANCE!")
 
 	example := &BatchJob{
 		Metadata: metav1.ObjectMeta{
-			Name: "example1",
+			Name: podName,
 		},
 		Spec: BatchJobSpec{
 			Foo: "hello",
@@ -142,15 +142,12 @@ func (p *plugin) CreateTPRInstance() {
 	}
 
 	var result BatchJob
-	
 
 
-	err = p.client.Core().RESTClient().Post().
-		Resource("batchs").
-		Namespace(api.NamespaceDefault).
-		Body(b).
-		Do().Into(&result)
 
+	req := p.client.Core().RESTClient().Post().Body(b)
+	req = req.AbsPath("/apis/kubernetes.io/v1/namespaces/default/batchjobs")
+	req.Do().Into(&result)
 	if err != nil {
 		glog.Errorf("Could not create batch as expected! - %+v", err)
 	}
@@ -170,7 +167,7 @@ func (p *plugin) Admit(attributes admission.Attributes) (err error) {
 	}
 	p.CreateTPR()
 	if pod.Annotations["batch"] == "true" {
-		p.CreateTPRInstance()
+		p.CreateTPRInstance(pod.Name)
 		return fmt.Errorf("Scheduled Pod %v in queue Y\n", pod.Name)
 	}
 	return nil
