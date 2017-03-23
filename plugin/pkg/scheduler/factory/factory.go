@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/wait"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/kubernetes/pkg/api/v1"
@@ -47,6 +48,7 @@ import (
 	"k8s.io/kubernetes/plugin/pkg/scheduler/core"
 	"k8s.io/kubernetes/plugin/pkg/scheduler/schedulercache"
 	"k8s.io/kubernetes/plugin/pkg/scheduler/util"
+	"k8s.io/kubernetes/test/e2e/framework"
 )
 
 const (
@@ -446,9 +448,34 @@ func (f *ConfigFactory) getPluginArgs() (*PluginFactoryArgs, error) {
 	}, nil
 }
 
+func (f *ConfigFactory) populatePods() (bool, error) {
+	// Watch and queue pods that need scheduling. Fetch from TPR and put into podQueue.
+	pod := &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "nginx",
+			Namespace: "default",
+		},
+		Spec: v1.PodSpec{
+			SchedulerName: "default-scheduler",
+			Containers: []v1.Container{
+				{
+					Name:      "container",
+					Image:     framework.GetPauseImageNameForHostArch(),
+				},
+			},
+		},
+	}
+	f.podQueue.Add(pod)
+	return false, nil
+}
+
 func (f *ConfigFactory) Run() {
-	// Watch and queue pods that need scheduling.
-	cache.NewReflector(f.createUnassignedNonTerminatedPodLW(), &v1.Pod{}, f.podQueue, 0).RunUntil(f.StopEverything)
+	// keep running this every second
+	go wait.PollUntil(1*time.Second, f.populatePods, f.StopEverything)
 
 	// Begin populating scheduled pods.
 	go f.scheduledPodPopulator.Run(f.StopEverything)

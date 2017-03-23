@@ -55,8 +55,6 @@ func (p *plugin) Admit(attributes admission.Attributes) (err error) {
 		return apierrors.NewBadRequest("Resource was marked with kind Pod but was unable to be converted")
 	}
 
-
-
-
-	return fmt.Errorf("## Name of pod admitted by DelayedBatch = %+v", pod.Name)
+	fmt.Printf("Scheduled Pod %v in queue Y\n", pod.Name)
+	return nil
 }
