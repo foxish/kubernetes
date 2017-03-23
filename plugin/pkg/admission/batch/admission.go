@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package antiaffinity
+package batch
 
 import (
 	"fmt"
@@ -44,6 +44,7 @@ func NewDelayedBatch() admission.Interface {
 }
 
 // Admit will print the pod name to apiserver log!
+// instead, stuff things into a TPR right here, for delayed submission.
 func (p *plugin) Admit(attributes admission.Attributes) (err error) {
 	// Ignore all calls to subresources or resources other than pods.
 	if len(attributes.GetSubresource()) != 0 || attributes.GetResource().GroupResource() != api.Resource("pods") {
@@ -53,6 +54,9 @@ func (p *plugin) Admit(attributes admission.Attributes) (err error) {
 	if !ok {
 		return apierrors.NewBadRequest("Resource was marked with kind Pod but was unable to be converted")
 	}
-	fmt.Printf("## Name of pod admitted by DelayedBatch = %+v", pod.Name)
-	return nil
+
+
+
+
+	return fmt.Errorf("## Name of pod admitted by DelayedBatch = %+v", pod.Name)
 }
