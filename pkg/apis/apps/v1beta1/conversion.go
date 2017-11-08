@@ -334,8 +334,9 @@ func Convert_extensions_RollingUpdateDeployment_To_v1beta1_RollingUpdateDeployme
 }
 
 func Convert_v1beta1_StatefulSetStatus_To_apps_StatefulSetStatus(in *appsv1beta1.StatefulSetStatus, out *apps.StatefulSetStatus, s conversion.Scope) error {
-	out.ObservedGeneration = new(int64)
-	*out.ObservedGeneration = in.ObservedGeneration
+	if in.ObservedGeneration != nil {
+		out.ObservedGeneration = *in.ObservedGeneration
+	}
 	out.Replicas = in.Replicas
 	out.ReadyReplicas = in.ReadyReplicas
 	out.CurrentReplicas = in.CurrentReplicas
@@ -350,9 +351,8 @@ func Convert_v1beta1_StatefulSetStatus_To_apps_StatefulSetStatus(in *appsv1beta1
 }
 
 func Convert_apps_StatefulSetStatus_To_v1beta1_StatefulSetStatus(in *apps.StatefulSetStatus, out *appsv1beta1.StatefulSetStatus, s conversion.Scope) error {
-	if in.ObservedGeneration != nil {
-		out.ObservedGeneration = *in.ObservedGeneration
-	}
+	out.ObservedGeneration = new(int64)
+	out.ObservedGeneration = &in.ObservedGeneration
 	out.Replicas = in.Replicas
 	out.ReadyReplicas = in.ReadyReplicas
 	out.CurrentReplicas = in.CurrentReplicas
