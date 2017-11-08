@@ -128,7 +128,7 @@ func (s *StatefulSetStatusViewer) Status(namespace, name string, revision int64)
 	if sts.Spec.UpdateStrategy.Type == apps.OnDeleteStatefulSetStrategyType {
 		return "", true, fmt.Errorf("%s updateStrategy does not have a Status`", apps.OnDeleteStatefulSetStrategyType)
 	}
-	if sts.Status.ObservedGeneration == nil || sts.Generation > *sts.Status.ObservedGeneration {
+	if sts.Generation > sts.Status.ObservedGeneration {
 		return "Waiting for statefulset spec update to be observed...\n", false, nil
 	}
 	if sts.Status.ReadyReplicas < sts.Spec.Replicas {

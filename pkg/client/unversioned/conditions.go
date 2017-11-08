@@ -95,7 +95,7 @@ func StatefulSetHasDesiredReplicas(ssClient appsclient.StatefulSetsGetter, ss *a
 		// create more pods. This will not be an issue once we've implemented graceful delete for
 		// StatefulSet, but till then concurrent stop operations on the same StatefulSet might have
 		// unintended side effects.
-		return ss.Status.ObservedGeneration != nil && *ss.Status.ObservedGeneration >= desiredGeneration && ss.Status.Replicas == ss.Spec.Replicas, nil
+		return ss.Status.ObservedGeneration >= desiredGeneration && ss.Status.Replicas == ss.Spec.Replicas, nil
 	}
 }
 
