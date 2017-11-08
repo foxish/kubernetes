@@ -41,6 +41,8 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		Convert_apps_StatefulSetSpec_To_v1beta1_StatefulSetSpec,
 		Convert_v1beta1_StatefulSetUpdateStrategy_To_apps_StatefulSetUpdateStrategy,
 		Convert_apps_StatefulSetUpdateStrategy_To_v1beta1_StatefulSetUpdateStrategy,
+		Convert_v1beta1_StatefulSetStatus_To_apps_StatefulSetStatus,
+		Convert_apps_StatefulSetStatus_To_v1beta1_StatefulSetStatus,
 		// extensions
 		// TODO: below conversions should be dropped in favor of auto-generated
 		// ones, see https://github.com/kubernetes/kubernetes/issues/39865
@@ -327,6 +329,39 @@ func Convert_extensions_RollingUpdateDeployment_To_v1beta1_RollingUpdateDeployme
 	}
 	if err := s.Convert(&in.MaxSurge, out.MaxSurge, 0); err != nil {
 		return err
+	}
+	return nil
+}
+
+func Convert_v1beta1_StatefulSetStatus_To_apps_StatefulSetStatus(in *appsv1beta1.StatefulSetStatus, out *apps.StatefulSetStatus, s conversion.Scope) error {
+	out.ObservedGeneration = new(int64)
+	*out.ObservedGeneration = in.ObservedGeneration
+	out.Replicas = in.Replicas
+	out.ReadyReplicas = in.ReadyReplicas
+	out.CurrentReplicas = in.CurrentReplicas
+	out.UpdatedReplicas = in.UpdatedReplicas
+	out.CurrentRevision = in.CurrentRevision
+	out.UpdateRevision = in.UpdateRevision
+	if in.CollisionCount != nil {
+		out.CollisionCount = new(int32)
+		*out.CollisionCount = *in.CollisionCount
+	}
+	return nil
+}
+
+func Convert_apps_StatefulSetStatus_To_v1beta1_StatefulSetStatus(in *apps.StatefulSetStatus, out *appsv1beta1.StatefulSetStatus, s conversion.Scope) error {
+	if in.ObservedGeneration != nil {
+		out.ObservedGeneration = *in.ObservedGeneration
+	}
+	out.Replicas = in.Replicas
+	out.ReadyReplicas = in.ReadyReplicas
+	out.CurrentReplicas = in.CurrentReplicas
+	out.UpdatedReplicas = in.UpdatedReplicas
+	out.CurrentRevision = in.CurrentRevision
+	out.UpdateRevision = in.UpdateRevision
+	if in.CollisionCount != nil {
+		out.CollisionCount = new(int32)
+		*out.CollisionCount = *in.CollisionCount
 	}
 	return nil
 }
