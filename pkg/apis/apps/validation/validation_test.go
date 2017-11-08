@@ -302,7 +302,6 @@ func TestValidateStatefulSet(t *testing.T) {
 }
 
 func TestValidateStatefulSetStatus(t *testing.T) {
-	observedGenerationMinusOne := int64(-1)
 	collisionCountMinusOne := int32(-1)
 	tests := []struct {
 		name               string
@@ -310,7 +309,7 @@ func TestValidateStatefulSetStatus(t *testing.T) {
 		readyReplicas      int32
 		currentReplicas    int32
 		updatedReplicas    int32
-		observedGeneration *int64
+		observedGeneration int64
 		collisionCount     *int32
 		expectedErr        bool
 	}{
@@ -360,7 +359,7 @@ func TestValidateStatefulSetStatus(t *testing.T) {
 			readyReplicas:      3,
 			currentReplicas:    2,
 			updatedReplicas:    1,
-			observedGeneration: &observedGenerationMinusOne,
+			observedGeneration: -1,
 			expectedErr:        true,
 		},
 		{

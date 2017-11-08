@@ -103,8 +103,7 @@ func TestV12StatefulSetSpecConversion(t *testing.T) {
 }
 
 func TestV1StatefulSetStatusConversion(t *testing.T) {
-	observedGeneration := new(int64)
-	*observedGeneration = 2
+	observedGeneration := 2
 	collisionCount := new(int32)
 	*collisionCount = 1
 	testcases := map[string]struct {
@@ -128,7 +127,7 @@ func TestV1StatefulSetStatusConversion(t *testing.T) {
 				UpdatedReplicas:    int32(3),
 				CurrentRevision:    "12345",
 				UpdateRevision:     "23456",
-				ObservedGeneration: *observedGeneration,
+				ObservedGeneration: observedGeneration,
 			},
 		},
 		"StatefulSetStatus Conversion 2": {
@@ -143,7 +142,7 @@ func TestV1StatefulSetStatusConversion(t *testing.T) {
 				CollisionCount:     collisionCount,
 			},
 			stsStatus2: &appsv1.StatefulSetStatus{
-				ObservedGeneration: *observedGeneration,
+				ObservedGeneration: observedGeneration,
 				Replicas:           int32(3),
 				ReadyReplicas:      int32(1),
 				CurrentReplicas:    int32(3),

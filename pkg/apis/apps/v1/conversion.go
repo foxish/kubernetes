@@ -44,8 +44,6 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		Convert_apps_StatefulSetUpdateStrategy_To_v1_StatefulSetUpdateStrategy,
 		Convert_extensions_RollingUpdateDaemonSet_To_v1_RollingUpdateDaemonSet,
 		Convert_v1_RollingUpdateDaemonSet_To_extensions_RollingUpdateDaemonSet,
-		Convert_v1_StatefulSetStatus_To_apps_StatefulSetStatus,
-		Convert_apps_StatefulSetStatus_To_v1_StatefulSetStatus,
 		Convert_v1_Deployment_To_extensions_Deployment,
 		Convert_extensions_Deployment_To_v1_Deployment,
 		Convert_extensions_DaemonSet_To_v1_DaemonSet,
@@ -448,39 +446,6 @@ func Convert_apps_StatefulSetUpdateStrategy_To_v1_StatefulSetUpdateStrategy(in *
 		*out.RollingUpdate.Partition = in.RollingUpdate.Partition
 	} else {
 		out.RollingUpdate = nil
-	}
-	return nil
-}
-
-func Convert_v1_StatefulSetStatus_To_apps_StatefulSetStatus(in *appsv1.StatefulSetStatus, out *apps.StatefulSetStatus, s conversion.Scope) error {
-	out.ObservedGeneration = new(int64)
-	*out.ObservedGeneration = in.ObservedGeneration
-	out.Replicas = in.Replicas
-	out.ReadyReplicas = in.ReadyReplicas
-	out.CurrentReplicas = in.CurrentReplicas
-	out.UpdatedReplicas = in.UpdatedReplicas
-	out.CurrentRevision = in.CurrentRevision
-	out.UpdateRevision = in.UpdateRevision
-	if in.CollisionCount != nil {
-		out.CollisionCount = new(int32)
-		*out.CollisionCount = *in.CollisionCount
-	}
-	return nil
-}
-
-func Convert_apps_StatefulSetStatus_To_v1_StatefulSetStatus(in *apps.StatefulSetStatus, out *appsv1.StatefulSetStatus, s conversion.Scope) error {
-	if in.ObservedGeneration != nil {
-		out.ObservedGeneration = *in.ObservedGeneration
-	}
-	out.Replicas = in.Replicas
-	out.ReadyReplicas = in.ReadyReplicas
-	out.CurrentReplicas = in.CurrentReplicas
-	out.UpdatedReplicas = in.UpdatedReplicas
-	out.CurrentRevision = in.CurrentRevision
-	out.UpdateRevision = in.UpdateRevision
-	if in.CollisionCount != nil {
-		out.CollisionCount = new(int32)
-		*out.CollisionCount = *in.CollisionCount
 	}
 	return nil
 }

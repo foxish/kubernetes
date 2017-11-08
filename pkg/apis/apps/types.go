@@ -166,7 +166,7 @@ type StatefulSetStatus struct {
 	// observedGeneration is the most recent generation observed for this StatefulSet. It corresponds to the
 	// StatefulSet's generation, which is updated on mutation by the API Server.
 	// +optional
-	ObservedGeneration *int64
+	ObservedGeneration int64
 
 	// replicas is the number of Pods created by the StatefulSet controller.
 	Replicas int32
